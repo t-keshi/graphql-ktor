@@ -1,6 +1,7 @@
 package com.example
 
 import com.google.inject.Guice
+import com.google.inject.ImplementedBy
 import com.google.inject.Injector
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
@@ -28,7 +29,7 @@ fun Application.module() {
 }
 
 private val defaultInjector: Injector = Guice.createInjector()
-private val getStudentsUseCase: GetStudentsUsecase = defaultInjector.getInstance(GetStudentsUsecase::class.java)
+private val getStudentsUseCase: GetStudentsUseCase = defaultInjector.getInstance(GetStudentsUseCase::class.java)
 
 fun Application.configureRouting() {
     routing {
@@ -41,7 +42,8 @@ fun Application.configureRouting() {
 }
 
 // usecase
-interface IContractsUseCase {
+@ImplementedBy(GetStudentsInteractor::class)
+interface GetStudentsUseCase {
     fun execute(): List<StudentResponse>
 }
 
@@ -50,22 +52,32 @@ data class StudentResponse(
     val name: String
 )
 
-class GetStudentsUsecase: IContractsUseCase {
+class GetStudentsInteractor: GetStudentsUseCase {
     private val defaultInjector: Injector = Guice.createInjector()
-    private val studentRepository: IStudentRepository = defaultInjector.getInstance(StudentRepository ::class.java)
+    private val studentRepository: IStudentRepository = defaultInjector.getInstance(IStudentRepository ::class.java)
 
     override fun execute(): List<StudentResponse> {
         val students = studentRepository.findMany()
-        return listOf( StudentResponse(id = students.first() .id, name = "foo"))
+        return listOf(StudentResponse(id = students.first().id, name = students.first().name))
     }
 }
 
 // repository
+@ImplementedBy(StudentRepository::class)
 interface IStudentRepository {
     fun findMany(): List<StudentEntity>
 }
 
 class StudentRepository : IStudentRepository {
+    override fun findMany(): List<StudentEntity> {
+        val sql = """
+            select id, name from student
+        """.trimIndent()
+        return listOf(StudentEntity(id = UUID.randomUUID(), name = "foo"))
+    }
+}
+
+class MockStudentRepository : IStudentRepository {
     override fun findMany(): List<StudentEntity> {
         val sql = """
             select id, name from student
