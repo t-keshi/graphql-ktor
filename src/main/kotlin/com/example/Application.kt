@@ -1,7 +1,6 @@
 package com.example
 
 import com.google.inject.Guice
-import com.google.inject.ImplementedBy
 import com.google.inject.Injector
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
@@ -20,7 +19,6 @@ fun main() {
         .start(wait = true)
 }
 
-@OptIn(KtorExperimentalLocationsAPI::class)
 fun Application.module() {
     install(Locations)
     install(ContentNegotiation) {
@@ -43,7 +41,6 @@ fun Application.configureRouting() {
 }
 
 // usecase
-@ImplementedBy(GetStudentsUsecase::class)
 interface IContractsUseCase {
     fun execute(): List<StudentResponse>
 }
@@ -71,7 +68,7 @@ interface IStudentRepository {
 class StudentRepository : IStudentRepository {
     override fun findMany(): List<StudentEntity> {
         val sql = """
-            select id, name for
+            select id, name from student
         """.trimIndent()
         return listOf(StudentEntity(id = UUID.randomUUID(), name = "foo"))
     }
